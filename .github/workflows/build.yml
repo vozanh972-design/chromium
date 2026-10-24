@@ -1,36 +1,39 @@
-name: Build Windows EXE
+name: Build Chromium Windows EXE
 
 on:
-  workflow_dispatch: # Cho phép bấm Run thủ công
+  workflow_dispatch:
   push:
-    branches: [ main ] # Tự động chạy mỗi khi bạn sửa bất kỳ file nào và push lên
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: 1. Kéo toàn bộ mã nguồn dự án
+      - name: 1. Kéo mã nguồn
         uses: actions/checkout@v4
 
-      - name: 2. Cài đặt môi trường biên dịch C++ & Build Tools
+      - name: 2. Cài đặt bộ công cụ depot_tools của Google (chứa GN và Ninja)
+        run: |
+          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git C:\depot_tools
+          echo "C:\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "DEPOT_TOOLS_WIN_TOOLCHAIN=0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: 3. Thiết lập Visual Studio C++ Compiler
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: 3. Cài đặt CMake & Ninja
-        uses: lukka/get-cmake@latest
-
-      - name: 4. Chạy lệnh Build tự động toàn bộ dự án
+      - name: 4. Sinh file cấu hình bản Release (gn gen)
         run: |
-          # Tự động sinh cấu hình và biên dịch toàn bộ mã nguồn
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build --config Release
+          gn gen out/Release --args="is_debug=false symbol_level=0 is_component_build=false target_cpu=\"x64\""
 
-      - name: 5. Tự động thu thập và xuất tất cả file .EXE thành phẩm
+      - name: 5. Biên dịch ra file chrome.exe bằng Ninja
+        run: |
+          ninja -C out/Release chrome
+
+      - name: 6. Xuất file chrome.exe thành phẩm
         uses: actions/upload-artifact@v4
         with:
-          name: Windows-App-EXE
+          name: Chromium-Windows-x64-EXE
           path: |
-            build/Release/*.exe
-            build/*.exe
-            out/Release/*.exe
-            out/Default/*.exe
+            out/Release/chrome.exe
+            out/Release/*.dll
