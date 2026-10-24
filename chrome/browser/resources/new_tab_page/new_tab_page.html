@@ -2,34 +2,512 @@
 <html dir="$i18n{textdirection}" lang="$i18n{language}" $i18n{roundedIconsAttribute} $i18n{webuiRoundedIconsAttribute}>
   <head>
     <meta charset="utf-8">
-    <title>$i18n{title}</title>
+    <title>Khởi đầu - $i18n{title}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Geist:wght@400;500&display=swap">
     <style>
-      body {
-        background: $i18n{backgroundColor};
-        margin: 0;
+      :root {
+        --accent: #3B4BFF;
+        --ink: #15171F;
+        --muted: #5A6074;
       }
-
-      #backgroundImage {
-        border: none;
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
         height: 100%;
-        pointer-events: none;
-        position: fixed;
-        top: 0;
-        visibility: hidden;
-        width: 100%;
+        margin: 0;
+        background: #E3E6F0;
+        color: var(--ink);
+        font-family: Geist, "Segoe UI", system-ui, sans-serif;
+        overflow: hidden;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .big {
+        font-family: 'Bricolage Grotesque', Geist, sans-serif;
+        font-weight: 700;
+        letter-spacing: -.02em;
+      }
+      .lbl {
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: .08em;
+        text-transform: uppercase;
       }
 
-      [show-background-image] #backgroundImage {
-        visibility: visible;
+      body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 12px 12px 12px;
+      }
+
+      /* Topbar */
+      .topbar {
+        height: 36px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 4px;
+      }
+      .pill {
+        height: 28px;
+        padding: 0 14px;
+        border-radius: 14px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      .sbar {
+        width: 320px;
+        height: 34px;
+        flex: none;
+        border-radius: 17px;
+        background: #fff;
+        box-shadow: 0 0 0 1px rgba(21, 23, 31, .09);
+        display: flex;
+        align-items: center;
+        padding: 0 6px 0 6px;
+        color: #4A5066;
+      }
+      .sbar input.t {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
+        padding-left: 6px;
+        font-size: 13px;
+        color: var(--ink);
+        font-family: inherit;
+      }
+      .sbar input.t::placeholder {
+        color: var(--muted);
+      }
+      .ibtn {
+        width: 32px;
+        height: 32px;
+        flex: none;
+        border: 0;
+        border-radius: 50%;
+        background: none;
+        color: #4A5066;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+        transition: background .15s;
+      }
+      .ibtn:hover {
+        background: rgba(21, 23, 31, .08);
+      }
+      .sbar .ibtn {
+        width: 26px;
+        height: 26px;
+      }
+      .sbar .go {
+        width: 26px;
+        height: 26px;
+        border: none;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      .tab {
+        height: 32px;
+        padding: 0 8px 0 14px;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 0 0 1px rgba(21, 23, 31, .08);
+        color: #4A5066;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+        transition: all .15s;
+      }
+      .tab.on {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: none;
+        font-weight: 500;
+        margin-left: 4px;
+      }
+      .tab b {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .tab button {
+        width: 18px;
+        height: 18px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(21, 23, 31, .08);
+        color: inherit;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        cursor: pointer;
+      }
+      .tab.on button {
+        background: rgba(255, 255, 255, .25);
+      }
+
+      /* Stage */
+      .stage {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        isolation: isolate;
+        border-radius: 20px;
+        padding: 36px 44px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        background:
+          radial-gradient(620px 420px at 88% 8%, rgba(255, 138, 76, .26), transparent 70%),
+          radial-gradient(700px 520px at 6% 96%, rgba(59, 75, 255, .20), transparent 70%),
+          radial-gradient(520px 420px at 62% 78%, rgba(126, 224, 195, .34), transparent 70%), #E4E8F6;
+        box-shadow: 0 1px 2px rgba(21, 23, 31, .06), 0 16px 40px rgba(21, 23, 31, .07);
+      }
+      .wrap {
+        width: 100%;
+        max-width: 1184px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+      .deco {
+        position: absolute;
+        z-index: -1;
+        pointer-events: none;
+      }
+      .ring {
+        right: -120px;
+        bottom: -170px;
+        width: 420px;
+        height: 420px;
+        border-radius: 50%;
+        border: 44px solid rgba(255, 255, 255, .55);
+      }
+      .disc {
+        right: 150px;
+        top: -90px;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, .35);
+      }
+      .dots {
+        inset: 0;
+        background-image: radial-gradient(rgba(21, 23, 31, .10) 1.2px, transparent 1.3px);
+        background-size: 26px 26px;
+        opacity: .5;
+      }
+
+      h1 {
+        margin: 10px 0 0;
+        font-size: clamp(48px, 6.6vw, 84px);
+        line-height: .95;
+        letter-spacing: -.035em;
+      }
+      h1 span {
+        color: var(--accent);
+      }
+      #date {
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr 1fr;
+        grid-template-rows: 72px minmax(240px, 288px);
+        gap: 14px;
+      }
+      .card {
+        border-radius: 18px;
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .fb {
+        grid-row: 1 / 3;
+        color: #fff;
+        padding: 26px;
+        position: relative;
+        overflow: hidden;
+        background: radial-gradient(300px 220px at 92% 0%, rgba(255, 255, 255, .30), transparent 70%), linear-gradient(150deg, #2F6BFF, var(--accent) 58%, #7A45E8);
+        box-shadow: 0 14px 32px -10px rgba(59, 75, 255, .55);
+        transition: transform .15s;
+      }
+      .fb:hover {
+        transform: translateY(-2px);
+      }
+      .fb .logo {
+        width: 88px;
+        height: 88px;
+        border-radius: 28px;
+        background: #fff;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Bricolage Grotesque', sans-serif;
+        font-weight: 700;
+        font-size: 64px;
+        line-height: 1;
+        padding-bottom: 6px;
+        box-shadow: 0 12px 24px -8px rgba(21, 23, 31, .4);
+      }
+      .fb .url {
+        font-size: clamp(30px, 3.4vw, 44px);
+        line-height: 1;
+        margin: 10px 0 18px;
+        letter-spacing: -.03em;
+      }
+      .fb .open {
+        height: 38px;
+        padding: 0 18px;
+        border-radius: 19px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .row1 {
+        grid-column: 2 / 4;
+        grid-row: 1;
+        display: flex;
+        gap: 14px;
+      }
+      .saved {
+        width: 190px;
+        flex: none;
+        background: #7EE0C3;
+        padding: 0 20px;
+        justify-content: center;
+      }
+      .saved .big {
+        font-size: 24px;
+        margin-top: 4px;
+      }
+      .search {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 10px 0 24px;
+        border-radius: 36px;
+        background: #fff;
+        box-shadow: 0 0 0 1px rgba(21, 23, 31, .08), 0 10px 26px rgba(21, 23, 31, .07);
+      }
+      .search input {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font: inherit;
+        font-size: 17px;
+        color: var(--ink);
+      }
+      .search input::placeholder {
+        color: var(--muted);
+      }
+      .search button {
+        width: 52px;
+        height: 52px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+      svg {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .shortcuts {
+        grid-column: 2 / 4;
+        grid-row: 2;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-around;
+        padding: 14px;
+        background: rgba(255, 255, 255, .78);
+        box-shadow: 0 0 0 1px rgba(21, 23, 31, .06);
+      }
+      .sc {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .sc i {
+        width: 76px;
+        height: 76px;
+        border-radius: 24px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px -8px rgba(21, 23, 31, .35), inset 0 1px 0 rgba(255, 255, 255, .35);
+        transition: transform .15s;
+      }
+      .sc:hover i {
+        transform: translateY(-3px);
+      }
+      .sc svg {
+        width: 30px;
+        height: 30px;
+      }
+      .sc.add {
+        color: var(--muted);
+      }
+      .sc.add i {
+        background: none;
+        border: 2px dashed #AEB4CC;
+        box-shadow: none;
+        color: var(--muted);
+      }
+
+      /* Keep Chromium background elements valid but invisible */
+      #backgroundImage {
+        display: none !important;
+      }
+      ntp-app {
+        display: none !important;
       }
     </style>
   </head>
   <body>
+    <!-- Topbar -->
+    <header class="topbar">
+      <span class="pill">Kiếm tiền</span>
+      <form class="sbar" action="https://www.google.com/search" method="get">
+        <button type="button" class="ibtn" aria-label="Quay lại" onclick="window.history.back()">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <button type="button" class="ibtn" aria-label="Tải lại" onclick="window.location.reload()">
+          <svg viewBox="0 0 24 24" width="16" height="16"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg>
+        </button>
+        <input name="q" class="t" placeholder="Tìm kiếm hoặc nhập địa chỉ" autocomplete="off">
+        <button type="submit" class="go">
+          <svg viewBox="0 0 24 24" width="15" height="15" style="stroke-width:2.2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>
+        </button>
+      </form>
+      <button class="ibtn" aria-label="Tiện ích">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M10 4a2 2 0 1 1 4 0v2h4v4h-2a2 2 0 1 0 0 4h2v4h-4v-2a2 2 0 1 0-4 0v2H6v-4h2a2 2 0 1 0 0-4H6V6h4z"/></svg>
+      </button>
+      <button class="ibtn" aria-label="Thẻ mới" onclick="window.location.reload()">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <div class="tab on"><b></b>Khởi đầu<button type="button" aria-label="Đóng thẻ"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke-width:2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="tab"><b style="background:#FF8A4C"></b>Đọc dở<button type="button" aria-label="Đóng thẻ"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke-width:2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="tab"><b style="background:#1FB58F"></b>Thư<button type="button" aria-label="Đóng thẻ"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke-width:2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+      <div class="tab"><b style="background:#8B5CF6"></b>Bản đồ<button type="button" aria-label="Đóng thẻ"><svg viewBox="0 0 24 24" width="10" height="10" style="stroke-width:2.6"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    </header>
+
+    <!-- Main Stage -->
+    <div class="stage">
+      <i class="deco ring"></i><i class="deco disc"></i><i class="deco dots"></i>
+
+      <div class="wrap">
+        <div>
+          <div class="lbl" id="date">Thứ Bảy · 24.10</div>
+          <h1 class="big" id="hi">Chào buổi sáng<span>.</span></h1>
+        </div>
+
+        <div class="grid">
+          <a class="card fb" href="https://facebook.com">
+            <span class="logo" aria-hidden="true">f</span>
+            <div>
+              <div class="lbl" style="opacity:.85">Liên kết nhanh</div>
+              <div class="big url">facebook.com</div>
+              <span class="open">Mở trang
+                <svg viewBox="0 0 24 24" width="16" height="16" style="stroke-width:2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
+            </div>
+          </a>
+
+          <div class="row1">
+            <div class="card saved"><div class="lbl">Đã lưu</div><div class="big">Để sau</div></div>
+            <form class="search" action="https://www.google.com/search" method="get">
+              <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>
+              <input name="q" placeholder="Tìm kiếm trên web" autocomplete="off" aria-label="Tìm kiếm trên web">
+              <button type="submit" aria-label="Tìm"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </form>
+          </div>
+
+          <div class="card shortcuts">
+            <a class="sc" href="https://vnexpress.net"><i style="background:linear-gradient(145deg,#FF9A5C,#E2552A)"><svg viewBox="0 0 24 24"><path d="M5 5h11v14H5zM16 9h3v8a2 2 0 0 1-2 2M8 9h5M8 13h5"/></svg></i>Tin tức</a>
+            <a class="sc" href="https://mail.google.com"><i style="background:linear-gradient(145deg,#5B6BFF,#7A45E8)"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></i>Thư</a>
+            <a class="sc" href="https://music.youtube.com"><i style="background:linear-gradient(145deg,#A78BFA,#D946EF)"><svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12M9 18a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0zM19 16a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/></svg></i>Âm nhạc</a>
+            <a class="sc" href="https://maps.google.com"><i style="background:linear-gradient(145deg,#34D1A8,#0E8F6E)"><svg viewBox="0 0 24 24"><path d="M12 21s6-5.5 6-11a6 6 0 0 0-12 0c0 5.5 6 11 6 11zM12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg></i>Bản đồ</a>
+            <div class="sc add"><i><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></i>Thêm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Chromium hooks to preserve WebUI stability -->
     <iframe id="backgroundImage" src="$i18nRaw{backgroundImageUrl}"></iframe>
     <ntp-app></ntp-app>
     <script type="module" src="new_tab_page.js"></script>
-    <link rel="stylesheet" href="chrome://resources/css/text_defaults_md.css">
-    <link rel="stylesheet" href="chrome://theme/colors.css?sets=ui,chrome">
-    <link rel="stylesheet" href="shared_vars.css">
+
+    <!-- Custom Logic -->
+    <script>
+      const d = new Date(), h = d.getHours(), p = n => String(n).padStart(2, '0');
+      const days = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
+      document.getElementById('hi').firstChild.nodeValue =
+        h < 11 ? 'Chào buổi sáng' : h < 13 ? 'Chào buổi trưa' : h < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
+      document.getElementById('date').textContent = days[d.getDay()] + ' · ' + p(d.getDate()) + '.' + p(d.getMonth() + 1);
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+          if (e.target.closest('button')) {
+            tab.remove();
+            return;
+          }
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+          tab.classList.add('on');
+        });
+      });
+    </script>
   </body>
 </html>
