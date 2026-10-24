@@ -1,0 +1,31 @@
+name: Build Chromium Windows App
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Kiem tra ma nguon
+        uses: actions/checkout@v4
+
+      - name: Thiet lap moi truong
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Dong goi giao dien moi
+        run: |
+          mkdir build_output
+          copy chrome\browser\resources\new_tab_page\new_tab_page.html build_output\index.html
+          echo "Hoan tat chuan bi giao dien!"
+
+      - name: Xuat file Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Chromium-Custom-Windows
+          path: build_output/
