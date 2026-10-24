@@ -13,26 +13,31 @@ jobs:
       - name: 1. Kéo mã nguồn
         uses: actions/checkout@v4
 
-      - name: 2. Cài đặt và khởi tạo bộ công cụ depot_tools
+      - name: 2. Cài đặt bộ công cụ depot_tools
         run: |
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git C:\depot_tools
           echo "C:\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "DEPOT_TOOLS_WIN_TOOLCHAIN=0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          # Khởi động depot_tools để nạp môi trường Python
           cmd.exe /c "C:\depot_tools\gclient.bat --version"
 
-      - name: 3. Thiết lập Visual Studio C++ Compiler
+      - name: 3. Tải công cụ biên dịch gn.exe của Google vào buildtools
+        run: |
+          New-Item -ItemType Directory -Force -Path buildtools\win
+          curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/windows-amd64/+/latest -o gn.zip
+          tar -xf gn.zip -C buildtools\win
+
+      - name: 4. Thiết lập Visual Studio C++ Compiler
         uses: ilammy/msvc-dev-cmd@v1
 
-      - name: 4. Sinh file cấu hình bản Release (gn gen)
+      - name: 5. Sinh file cấu hình bản Release (gn gen)
         run: |
           gn gen out/Release --args="is_debug=false symbol_level=0 is_component_build=false target_cpu=\"x64\""
 
-      - name: 5. Biên dịch ra file chrome.exe bằng Ninja
+      - name: 6. Biên dịch ra file chrome.exe bằng Ninja
         run: |
           ninja -C out/Release chrome
 
-      - name: 6. Xuất file chrome.exe thành phẩm
+      - name: 7. Xuất file chrome.exe thành phẩm
         uses: actions/upload-artifact@v4
         with:
           name: Chromium-Windows-x64-EXE
