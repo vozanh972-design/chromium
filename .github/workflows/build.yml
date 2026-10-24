@@ -13,11 +13,13 @@ jobs:
       - name: 1. Kéo mã nguồn
         uses: actions/checkout@v4
 
-      - name: 2. Cài đặt bộ công cụ depot_tools của Google (chứa GN và Ninja)
+      - name: 2. Cài đặt và khởi tạo bộ công cụ depot_tools
         run: |
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git C:\depot_tools
           echo "C:\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo "DEPOT_TOOLS_WIN_TOOLCHAIN=0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          # Khởi động depot_tools để nạp môi trường Python
+          cmd.exe /c "C:\depot_tools\gclient.bat --version"
 
       - name: 3. Thiết lập Visual Studio C++ Compiler
         uses: ilammy/msvc-dev-cmd@v1
