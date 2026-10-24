@@ -1,31 +1,36 @@
-name: Build Chromium Windows App
+name: Build Windows EXE
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Cho phép bấm Run thủ công
   push:
-    branches: [ main ]
+    branches: [ main ] # Tự động chạy mỗi khi bạn sửa bất kỳ file nào và push lên
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Kiem tra ma nguon
+      - name: 1. Kéo toàn bộ mã nguồn dự án
         uses: actions/checkout@v4
 
-      - name: Thiet lap moi truong
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - name: 2. Cài đặt môi trường biên dịch C++ & Build Tools
+        uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Dong goi giao dien moi
+      - name: 3. Cài đặt CMake & Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: 4. Chạy lệnh Build tự động toàn bộ dự án
         run: |
-          mkdir build_output
-          copy chrome\browser\resources\new_tab_page\new_tab_page.html build_output\index.html
-          echo "Hoan tat chuan bi giao dien!"
+          # Tự động sinh cấu hình và biên dịch toàn bộ mã nguồn
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
 
-      - name: Xuat file Artifact
+      - name: 5. Tự động thu thập và xuất tất cả file .EXE thành phẩm
         uses: actions/upload-artifact@v4
         with:
-          name: Chromium-Custom-Windows
-          path: build_output/
+          name: Windows-App-EXE
+          path: |
+            build/Release/*.exe
+            build/*.exe
+            out/Release/*.exe
+            out/Default/*.exe
