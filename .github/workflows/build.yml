@@ -1,4 +1,4 @@
-name: Build Chromium Windows EXE
+name: Build Windows Browser EXE
 
 on:
   workflow_dispatch:
@@ -6,41 +6,83 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-windows-exe:
     runs-on: windows-latest
 
     steps:
       - name: 1. Kéo mã nguồn
         uses: actions/checkout@v4
 
-      - name: 2. Cài đặt bộ công cụ depot_tools
+      - name: 2. Cài đặt Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 3. Tự động gom tài nguyên giao diện & Cấu hình App
         run: |
-          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git C:\depot_tools
-          echo "C:\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "DEPOT_TOOLS_WIN_TOOLCHAIN=0" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          cmd.exe /c "C:\depot_tools\gclient.bat --version"
+          mkdir app_runtime
+          mkdir app_runtime\public
 
-      - name: 3. Tải công cụ biên dịch gn.exe của Google vào buildtools
+          # Tự động lấy toàn bộ giao diện bạn đã sửa
+          $resPath = "chrome\browser\resources\new_tab_page"
+          if (Test-Path $resPath) {
+              Copy-Item -Path "$resPath\*" -Destination "app_runtime\public" -Recurse -Force
+          }
+
+          if (Test-Path "app_runtime\public\new_tab_page.html") {
+              Copy-Item -Path "app_runtime\public\new_tab_page.html" -Destination "app_runtime\public\index.html" -Force
+          }
+
+          @"
+          {
+            "name": "lumen-browser",
+            "version": "1.0.0",
+            "main": "main.js",
+            "scripts": { "dist": "electron-builder --win --x64" },
+            "build": {
+              "appId": "com.lumen.browser",
+              "productName": "Lumen Browser",
+              "directories": { "output": "dist" },
+              "win": { "target": ["nsis", "portable"] }
+            },
+            "devDependencies": {
+              "electron": "^30.0.0",
+              "electron-builder": "^24.13.3"
+            }
+          }
+          "@ | Out-File -FilePath app_runtime\package.json -Encoding utf8
+
+          @"
+          const { app, BrowserWindow } = require('electron');
+          const path = require('path');
+          function createWindow() {
+            const win = new BrowserWindow({
+              width: 1300,
+              height: 860,
+              title: 'Lumen Browser',
+              autoHideMenuBar: true
+            });
+            win.loadFile(path.join(__dirname, 'public', 'index.html'));
+            win.webContents.setWindowOpenHandler(({ url }) => {
+              if (url.startsWith('http:') || url.startsWith('https:')) {
+                win.loadURL(url);
+                return { action: 'deny' };
+              }
+              return { action: 'allow' };
+            });
+          }
+          app.whenReady().then(createWindow);
+          app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+          "@ | Out-File -FilePath app_runtime\main.js -Encoding utf8
+
+      - name: 4. Biên dịch trên máy chủ GitHub
+        working-directory: app_runtime
         run: |
-          New-Item -ItemType Directory -Force -Path buildtools\win
-          curl -sL https://chrome-infra-packages.appspot.com/dl/gn/gn/windows-amd64/+/latest -o gn.zip
-          tar -xf gn.zip -C buildtools\win
+          npm install
+          npm run dist
 
-      - name: 4. Thiết lập Visual Studio C++ Compiler
-        uses: ilammy/msvc-dev-cmd@v1
-
-      - name: 5. Sinh file cấu hình bản Release (gn gen)
-        run: |
-          gn gen out/Release --args="is_debug=false symbol_level=0 is_component_build=false target_cpu=\"x64\""
-
-      - name: 6. Biên dịch ra file chrome.exe bằng Ninja
-        run: |
-          ninja -C out/Release chrome
-
-      - name: 7. Xuất file chrome.exe thành phẩm
+      - name: 5. Xuất file cài đặt .EXE
         uses: actions/upload-artifact@v4
         with:
-          name: Chromium-Windows-x64-EXE
-          path: |
-            out/Release/chrome.exe
-            out/Release/*.dll
+          name: Lumen-Browser-Windows-EXE
+          path: app_runtime/dist/*.exe
