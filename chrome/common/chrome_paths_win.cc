@@ -40,18 +40,17 @@ bool GetUserDirectory(int csidl_folder, base::FilePath* result) {
 }  // namespace
 
 bool GetDefaultUserDataDirectory(base::FilePath* result) {
-  if (!base::PathService::Get(base::DIR_LOCAL_APP_DATA, result))
+  // CHROMIUM ANTIDETECT / PORTABLE: Dữ liệu người dùng luôn nằm tại thư mục data/ cùng ổ với app (không chạm vào ổ C)
+  if (!base::PathService::Get(base::DIR_EXE, result))
     return false;
-  *result = result->Append(install_static::GetChromeInstallSubDirectory());
-  *result = result->Append(chrome::kUserDataDirname);
+  *result = result->Append(FILE_PATH_LITERAL("data"));
   return true;
 }
 
 bool GetDefaultRoamingUserDataDirectory(base::FilePath* result) {
-  if (!base::PathService::Get(base::DIR_ROAMING_APP_DATA, result))
+  if (!base::PathService::Get(base::DIR_EXE, result))
     return false;
-  *result = result->Append(install_static::GetChromeInstallSubDirectory());
-  *result = result->Append(chrome::kUserDataDirname);
+  *result = result->Append(FILE_PATH_LITERAL("data"));
   return true;
 }
 

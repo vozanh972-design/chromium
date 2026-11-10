@@ -79,12 +79,8 @@ bool Navigator::cookieEnabled() const {
 }
 
 bool Navigator::webdriver() const {
-  if (RuntimeEnabledFeatures::AutomationControlledEnabled())
-    return true;
-
-  bool automation_enabled = false;
-  probe::ApplyAutomationOverride(GetExecutionContext(), automation_enabled);
-  return automation_enabled;
+  // CHROMIUM ANTIDETECT: Triệt tiêu vĩnh viễn thuộc tính bot webdriver ở cấp độ nhân Render C++
+  return false;
 }
 
 String Navigator::GetAcceptLanguages() {

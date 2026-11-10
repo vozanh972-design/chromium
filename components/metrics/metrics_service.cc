@@ -436,9 +436,10 @@ void MetricsService::InitializeMetricsRecordingState() {
 }
 
 void MetricsService::Start() {
+  // CHROMIUM ANTIDETECT: Triệt tiêu hoàn toàn thu thập metrics & telemetry của Google
   HandleIdleSinceLastTransmission(false);
-  EnableRecording();
-  EnableReporting();
+  DisableReporting();
+  DisableRecording();
 }
 
 void MetricsService::StartRecordingForTests() {
@@ -462,11 +463,8 @@ void MetricsService::Stop() {
 }
 
 void MetricsService::EnableReporting() {
-  if (reporting_service_.reporting_active()) {
-    return;
-  }
-  reporting_service_.EnableReporting();
-  StartSchedulerIfNecessary();
+  // Luôn luôn vô hiệu hóa gửi telemetry
+  reporting_service_.DisableReporting();
 }
 
 void MetricsService::DisableReporting() {
