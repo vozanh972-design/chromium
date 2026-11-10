@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: 1. Kéo mã nguồn
+      - name: 1. Kéo mã nguồn dự án
         uses: actions/checkout@v4
 
       - name: 2. Cài đặt Node.js
@@ -23,7 +23,6 @@ jobs:
           mkdir app_runtime
           mkdir app_runtime\public
 
-          # Tự động lấy toàn bộ giao diện bạn đã sửa
           $resPath = "chrome\browser\resources\new_tab_page"
           if (Test-Path $resPath) {
               Copy-Item -Path "$resPath\*" -Destination "app_runtime\public" -Recurse -Force
@@ -43,7 +42,12 @@ jobs:
               "appId": "com.lumen.browser",
               "productName": "Lumen Browser",
               "directories": { "output": "dist" },
-              "win": { "target": ["nsis", "portable"] }
+              "win": { "target": "nsis" },
+              "nsis": {
+                "oneClick": true,
+                "perMachine": false,
+                "runAfterFinish": true
+              }
             },
             "devDependencies": {
               "electron": "^30.0.0",
@@ -81,8 +85,8 @@ jobs:
           npm install
           npm run dist
 
-      - name: 5. Xuất file cài đặt .EXE
+      - name: 5. Xuất duy nhất 1 file cài đặt Setup (.exe)
         uses: actions/upload-artifact@v4
         with:
-          name: Lumen-Browser-Windows-EXE
-          path: app_runtime/dist/*.exe
+          name: Lumen-Browser-Setup
+          path: app_runtime/dist/*Setup*.exe
