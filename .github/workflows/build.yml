@@ -59,12 +59,25 @@ jobs:
           const fs = require('fs');
 
           // =========================================================================
-          // CỜ TĂNG TỐC PHẦN CỨNG CHROMIUM (TỐI ƯU SIÊU MƯỢT, GIẢM LAG, GIẢM RAM)
+          // CẤU HÌNH CHROMIUM ANTIDETECT (TRIỆT TIÊU 100% TELEMETRY & CHỐNG PHÁT HIỆN)
           // =========================================================================
-          app.commandLine.appendSwitch('enable-gpu-rasterization');
-          app.commandLine.appendSwitch('enable-zero-copy');
-          app.commandLine.appendSwitch('ignore-gpu-blocklist');
-          app.commandLine.appendSwitch('disable-background-timer-throttling');
+          // 1. Chống phát hiện Bot / Automation (Xóa navigator.webdriver)
+          app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
+          
+          // 2. Chống rò rỉ IP card mạng thật qua WebRTC (WebRTC Leak Shield)
+          app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
+
+          // 3. Loại bỏ toàn bộ dịch vụ ngầm và theo dõi của Google gốc (No Phone-Home)
+          app.commandLine.appendSwitch('disable-background-networking');
+          app.commandLine.appendSwitch('disable-breakpad');
+          app.commandLine.appendSwitch('disable-component-update');
+          app.commandLine.appendSwitch('disable-domain-reliability');
+          app.commandLine.appendSwitch('disable-sync');
+          app.commandLine.appendSwitch('disable-client-side-phishing-detection');
+          app.commandLine.appendSwitch('disable-default-apps');
+          app.commandLine.appendSwitch('no-default-browser-check');
+          app.commandLine.appendSwitch('disable-speech-api');
+          app.commandLine.appendSwitch('renderer-process-limit', '6');
 
           // =========================================================================
           // LƯU TOÀN BỘ DỮ LIỆU NGAY TRÊN Ổ VÀ THƯ MỤC CÀI ĐẶT (KHÔNG LƯU VÀO Ổ C)
@@ -96,9 +109,16 @@ jobs:
                 webviewTag: true,
                 nodeIntegration: false,
                 contextIsolation: true,
-                spellcheck: false
+                spellcheck: false,
+                backgroundThrottling: true
               }
             });
+
+            // Tẩy sạch định danh Electron khỏi User-Agent, ngụy trang thành Chrome chuẩn 100%
+            const rawUA = win.webContents.userAgent;
+            const cleanUA = rawUA.replace(/Electron\/[0-9\.]+\s?/g, '');
+            win.webContents.userAgent = cleanUA;
+
             win.once('ready-to-show', () => {
               win.show();
             });
