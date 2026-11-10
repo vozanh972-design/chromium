@@ -59,6 +59,14 @@ jobs:
           const fs = require('fs');
 
           // =========================================================================
+          // CỜ TĂNG TỐC PHẦN CỨNG CHROMIUM (TỐI ƯU SIÊU MƯỢT, GIẢM LAG, GIẢM RAM)
+          // =========================================================================
+          app.commandLine.appendSwitch('enable-gpu-rasterization');
+          app.commandLine.appendSwitch('enable-zero-copy');
+          app.commandLine.appendSwitch('ignore-gpu-blocklist');
+          app.commandLine.appendSwitch('disable-background-timer-throttling');
+
+          // =========================================================================
           // LƯU TOÀN BỘ DỮ LIỆU NGAY TRÊN Ổ VÀ THƯ MỤC CÀI ĐẶT (KHÔNG LƯU VÀO Ổ C)
           // =========================================================================
           const exeDir = path.dirname(process.execPath);
@@ -82,9 +90,10 @@ jobs:
               height: 860,
               title: 'Lumen Browser',
               autoHideMenuBar: true,
-              backgroundColor: '#0f141c',
+              backgroundColor: '#0d1613',
               show: false,
               webPreferences: {
+                webviewTag: true,
                 nodeIntegration: false,
                 contextIsolation: true,
                 spellcheck: false
@@ -95,10 +104,6 @@ jobs:
             });
             win.loadFile(path.join(__dirname, 'public', 'index.html'));
             win.webContents.setWindowOpenHandler(({ url }) => {
-              if (url.startsWith('http:') || url.startsWith('https:')) {
-                win.loadURL(url);
-                return { action: 'deny' };
-              }
               return { action: 'allow' };
             });
           }
