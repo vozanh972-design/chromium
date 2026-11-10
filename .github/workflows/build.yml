@@ -44,7 +44,8 @@ jobs:
               "directories": { "output": "dist" },
               "win": { "target": "nsis" },
               "nsis": {
-                "oneClick": true,
+                "oneClick": false,
+                "allowToChangeInstallationDirectory": true,
                 "perMachine": false,
                 "runAfterFinish": true
               }
@@ -59,6 +60,26 @@ jobs:
           @"
           const { app, BrowserWindow } = require('electron');
           const path = require('path');
+          const fs = require('fs');
+
+          // =========================================================================
+          // LƯU TOÀN BỘ DỮ LIỆU NGAY TRÊN Ổ VÀ THƯ MỤC CÀI ĐẶT (KHÔNG LƯU VÀO Ổ C)
+          // =========================================================================
+          const exeDir = path.dirname(process.execPath);
+          const dataDir = path.join(exeDir, 'data');
+          try {
+            if (!fs.existsSync(dataDir)) {
+              fs.mkdirSync(dataDir, { recursive: true });
+            }
+            app.setPath('userData', dataDir);
+            app.setPath('appData', exeDir);
+            app.setPath('sessionData', path.join(dataDir, 'Session'));
+            app.setPath('crashDumps', path.join(dataDir, 'CrashDumps'));
+            app.setPath('logs', path.join(dataDir, 'Logs'));
+          } catch (e) {
+            console.error('Error setting custom data directory:', e);
+          }
+
           function createWindow() {
             const win = new BrowserWindow({
               width: 1300,
