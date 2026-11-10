@@ -23,14 +23,8 @@ jobs:
           mkdir app_runtime
           mkdir app_runtime\public
 
-          $resPath = "chrome\browser\resources\new_tab_page"
-          if (Test-Path $resPath) {
-              Copy-Item -Path "$resPath\*" -Destination "app_runtime\public" -Recurse -Force
-          }
-
-          if (Test-Path "app_runtime\public\new_tab_page.html") {
-              Copy-Item -Path "app_runtime\public\new_tab_page.html" -Destination "app_runtime\public\index.html" -Force
-          }
+          # Chỉ đóng gói duy nhất file HTML tối ưu sạch, loại bỏ 100% file rác thừa
+          Copy-Item -Path "chrome\browser\resources\new_tab_page\new_tab_page.html" -Destination "app_runtime\public\index.html" -Force
 
           @"
           {
@@ -85,7 +79,17 @@ jobs:
               width: 1300,
               height: 860,
               title: 'Lumen Browser',
-              autoHideMenuBar: true
+              autoHideMenuBar: true,
+              backgroundColor: '#0f141c',
+              show: false,
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                spellcheck: false
+              }
+            });
+            win.once('ready-to-show', () => {
+              win.show();
             });
             win.loadFile(path.join(__dirname, 'public', 'index.html'));
             win.webContents.setWindowOpenHandler(({ url }) => {
