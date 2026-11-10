@@ -22,9 +22,11 @@ jobs:
         run: |
           mkdir app_runtime
           mkdir app_runtime\public
+          mkdir app_runtime\public\images
 
-          # Chỉ đóng gói duy nhất file HTML tối ưu sạch, loại bỏ 100% file rác thừa
+          # Đóng gói giao diện HTML tối ưu sạch và các hình nền hệ điều hành
           Copy-Item -Path "chrome\browser\resources\new_tab_page\new_tab_page.html" -Destination "app_runtime\public\index.html" -Force
+          Copy-Item -Path "chrome\browser\resources\new_tab_page\images\*" -Destination "app_runtime\public\images" -Force
 
           @"
           {
