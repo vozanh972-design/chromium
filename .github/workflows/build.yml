@@ -54,6 +54,63 @@ jobs:
           "@ | Out-File -FilePath app_runtime\package.json -Encoding utf8
 
           @"
+          // =========================================================================
+          // ANTIDETECT CORE PRELOAD: CLIENT HINTS, AUDIOCONTEXT NOISE & AUTOMATION SHIELD
+          // =========================================================================
+          try {
+            // 1. Triệt tiêu triệt để cờ navigator.webdriver
+            Object.defineProperty(navigator, 'webdriver', {
+              get: () => undefined,
+              configurable: true
+            });
+            delete Object.getPrototypeOf(navigator).webdriver;
+          } catch(e) {}
+
+          try {
+            // 2. Client Hints (navigator.userAgentData) chuẩn Chrome 124 trên Windows x64
+            const brands = [
+              { brand: 'Chromium', version: '124' },
+              { brand: 'Google Chrome', version: '124' },
+              { brand: 'Not-A.Brand', version: '99' }
+            ];
+            Object.defineProperty(navigator, 'userAgentData', {
+              get: () => ({
+                brands: brands,
+                mobile: false,
+                platform: 'Windows',
+                getHighEntropyValues: async (hints) => ({
+                  brands: brands,
+                  mobile: false,
+                  platform: 'Windows',
+                  platformVersion: '15.0.0',
+                  architecture: 'x86',
+                  bitness: '64',
+                  model: '',
+                  uaFullVersion: '124.0.0.0',
+                  fullVersionList: brands
+                })
+              }),
+              configurable: true,
+              enumerable: true
+            });
+          } catch(e) {}
+
+          try {
+            // 3. AudioContext Fingerprint Micro-noise: ngăn chặn hàm băm âm thanh nhận diện thiết bị
+            if (window.AudioBuffer) {
+              const origGetChannelData = AudioBuffer.prototype.getChannelData;
+              AudioBuffer.prototype.getChannelData = function(channel) {
+                const data = origGetChannelData.apply(this, arguments);
+                for (let i = 0; i < data.length; i += 97) {
+                  data[i] += 0.0000001 * (Math.sin(i) - 0.5);
+                }
+                return data;
+              };
+            }
+          } catch(e) {}
+          "@ | Out-File -FilePath app_runtime\preload.js -Encoding utf8
+
+          @"
           const { app, BrowserWindow, session } = require('electron');
           const path = require('path');
           const fs = require('fs');
@@ -64,8 +121,8 @@ jobs:
           // 1. Chống phát hiện Bot / Automation (Xóa navigator.webdriver)
           app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
           
-          // 2. Chống rò rỉ IP card mạng thật qua WebRTC (WebRTC Leak Shield)
-          app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
+          // 2. Chống rò rỉ IP card mạng thật qua WebRTC (WebRTC Leak Shield tuyệt đối)
+          app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'disable_non_proxied_udp');
 
           // 3. Tăng tốc phần cứng GPU trực tiếp (Không dùng CPU vẽ chậm chạp)
           app.commandLine.appendSwitch('ignore-gpu-blocklist');
@@ -88,6 +145,7 @@ jobs:
           // =========================================================================
           const cleanUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
           app.userAgentFallback = cleanUA;
+          const preloadScript = path.join(__dirname, 'preload.js');
 
           // =========================================================================
           // LƯU TOÀN BỘ DỮ LIỆU NGAY TRÊN Ổ VÀ THƯ MỤC CÀI ĐẶT (KHÔNG LƯU VÀO Ổ C)
@@ -119,7 +177,8 @@ jobs:
                 nodeIntegration: false,
                 contextIsolation: true,
                 spellcheck: false,
-                backgroundThrottling: false
+                backgroundThrottling: false,
+                preload: preloadScript
               }
             });
 
@@ -135,7 +194,7 @@ jobs:
           }
 
           app.on('web-contents-created', (event, contents) => {
-            // Đảm bảo mọi webview con tải web với tốc độ tối đa và không bị chặn
+            // Đảm bảo mọi webview con tải web với User-Agent chuẩn và không bị chặn
             contents.setUserAgent(cleanUA);
             contents.setWindowOpenHandler(({ url }) => {
               return { action: 'allow' };
@@ -144,8 +203,10 @@ jobs:
 
           app.whenReady().then(() => {
             try {
+              session.defaultSession.setPreloads([preloadScript]);
               const ses = session.fromPartition('persist:lumen');
               ses.setUserAgent(cleanUA);
+              ses.setPreloads([preloadScript]);
             } catch(e){}
             createWindow();
           });

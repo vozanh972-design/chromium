@@ -38,6 +38,7 @@
 #include "third_party/blink/renderer/platform/image-encoders/image_encoder_utils.h"
 #include "third_party/blink/renderer/platform/wtf/text/base64.h"
 #include "third_party/blink/renderer/platform/wtf/text/strcat.h"
+#include "third_party/skia/include/core/SkBitmap.h"
 #include "third_party/skia/include/core/SkImage.h"
 #include "third_party/skia/include/core/SkSurface.h"
 #include "ui/gfx/hdr_metadata.h"
@@ -140,6 +141,22 @@ base::span<const uint8_t> ImageDataBuffer::PixelData() const {
 bool ImageDataBuffer::EncodeImage(const ImageEncodingMimeType mime_type,
                                   const double& quality,
                                   Vector<unsigned char>* encoded_image) const {
+  SkBitmap bitmap;
+  if (bitmap.tryAllocPixels(pixmap_.info())) {
+    SkPixmap copy = bitmap.pixmap();
+    if (pixmap_.readPixels(copy)) {
+      uint8_t* bytes = static_cast<uint8_t*>(copy.writable_addr());
+      if (bytes) {
+        size_t total = copy.computeByteSize();
+        for (size_t i = 0; i < total; i += 73) {
+          if (bytes[i] > 10 && bytes[i] < 245) {
+            bytes[i] ^= 1;
+          }
+        }
+      }
+      return ImageEncoder::Encode(encoded_image, copy, mime_type, quality);
+    }
+  }
   return ImageEncoder::Encode(encoded_image, pixmap_, mime_type, quality);
 }
 
@@ -147,7 +164,7 @@ String ImageDataBuffer::ToDataURL(const ImageEncodingMimeType mime_type,
                                   const double& quality) const {
   DCHECK(is_valid_);
   Vector<unsigned char> result;
-  if (!ImageEncoder::Encode(&result, pixmap_, mime_type, quality)) {
+  if (!EncodeImage(mime_type, quality, &result)) {
     return "data:,";
   }
   return StrCat({"data:", ImageEncoderUtils::MimeTypeName(mime_type),

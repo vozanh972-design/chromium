@@ -25,9 +25,11 @@
 
 #include "third_party/blink/renderer/modules/webgl/webgl_rendering_context_base.h"
 
+#include <cstdlib>
 #include <inttypes.h>
 
 #include <memory>
+#include <string>
 #include <utility>
 
 #include "base/bit_cast.h"
@@ -4287,8 +4289,22 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       return ScriptValue::CreateNull(script_state->GetIsolate());
     case WebGLDebugRendererInfo::kUnmaskedRendererWebgl:
       if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
-        return WebGLAny(script_state,
-                        String(ContextGL()->GetString(GL_RENDERER)));
+        const char* custom_renderer = std::getenv("ANTIDETECT_WEBGL_RENDERER");
+        if (custom_renderer && custom_renderer[0] != '\0') {
+          return WebGLAny(script_state, String(custom_renderer));
+        }
+        const char* raw_renderer =
+            reinterpret_cast<const char*>(ContextGL()->GetString(GL_RENDERER));
+        std::string gl_renderer = raw_renderer ? raw_renderer : "";
+        if (gl_renderer.find("SwiftShader") != std::string::npos ||
+            gl_renderer.find("llvmpipe") != std::string::npos ||
+            gl_renderer.empty()) {
+          return WebGLAny(
+              script_state,
+              String("ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 "
+                     "vs_5_0 ps_5_0, D3D11)"));
+        }
+        return WebGLAny(script_state, String(gl_renderer.c_str()));
       }
       SynthesizeGLError(
           GL_INVALID_ENUM, "getParameter",
@@ -4296,8 +4312,17 @@ ScriptValue WebGLRenderingContextBase::getParameter(ScriptState* script_state,
       return ScriptValue::CreateNull(script_state->GetIsolate());
     case WebGLDebugRendererInfo::kUnmaskedVendorWebgl:
       if (ExtensionEnabled(kWebGLDebugRendererInfoName)) {
-        return WebGLAny(script_state,
-                        String(ContextGL()->GetString(GL_VENDOR)));
+        const char* custom_vendor = std::getenv("ANTIDETECT_WEBGL_VENDOR");
+        if (custom_vendor && custom_vendor[0] != '\0') {
+          return WebGLAny(script_state, String(custom_vendor));
+        }
+        const char* raw_vendor =
+            reinterpret_cast<const char*>(ContextGL()->GetString(GL_VENDOR));
+        std::string gl_vendor = raw_vendor ? raw_vendor : "";
+        if (gl_vendor.empty() || gl_vendor == "Google Inc.") {
+          return WebGLAny(script_state, String("Google Inc. (NVIDIA)"));
+        }
+        return WebGLAny(script_state, String(gl_vendor.c_str()));
       }
       SynthesizeGLError(
           GL_INVALID_ENUM, "getParameter",

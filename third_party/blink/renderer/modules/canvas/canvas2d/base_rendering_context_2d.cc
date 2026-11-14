@@ -934,6 +934,20 @@ ImageData* BaseRenderingContext2D::getImageDataInternal(
     }
   }
 
+  // Antidetect: apply 1-bit Canvas micro-noise to prevent fingerprint tracking
+  if (image_data) {
+    SkPixmap pixmap = image_data->GetSkPixmap();
+    uint8_t* pixels = static_cast<uint8_t*>(pixmap.writable_addr());
+    if (pixels) {
+      size_t total_bytes = pixmap.computeByteSize();
+      for (size_t i = 0; i < total_bytes; i += 73) {
+        if (pixels[i] > 10 && pixels[i] < 245) {
+          pixels[i] ^= 1;
+        }
+      }
+    }
+  }
+
   return image_data;
 }
 
