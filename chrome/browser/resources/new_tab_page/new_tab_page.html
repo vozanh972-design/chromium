@@ -50,6 +50,7 @@
     background-position: center;
     background-repeat: no-repeat;
     pointer-events: none;
+    background-image: url("images/bg_windows.png");
   }
 
   .bg-overlay {
@@ -614,7 +615,7 @@
       </button>
     </div>
 
-    <form class="omnibox-form" id="omnibox-form" onsubmit="handleOmniboxSubmit(event)">
+    <form class="omnibox-form" id="omnibox-form" onsubmit="event.preventDefault(); return handleOmniboxSubmit(event);">
       <div class="omnibox-lock" title="Bảo mật kết nối" onclick="goHome()">
         <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
       </div>
@@ -652,12 +653,12 @@
   <!-- ĐỒNG HỒ -->
   <section class="clock-section">
     <div class="clock-time" id="clock">12:00</div>
-    <div class="clock-date" id="date">Đang tải ngày...</div>
+    <div class="clock-date" id="date">Đang cập nhật...</div>
   </section>
 
   <!-- THANH TÌM KIẾM TRUNG TÂM -->
   <section class="search-container">
-    <form class="search-box" id="search-form" onsubmit="handleSearchSubmit(event)">
+    <form class="search-box" id="search-form" onsubmit="event.preventDefault(); return handleSearchSubmit(event);">
       <button type="button" class="engine-select" id="engine-select-btn" onclick="toggleEngineDropdown(event)">
         <span id="current-engine-name">DuckDuckGo</span>
         <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
@@ -730,8 +731,21 @@
 
   const currentOS = detectOS();
   const bgEl = document.getElementById('bg-wallpaper');
-  bgEl.style.backgroundImage = 'url(\"images/bg_' + currentOS.key + '.png\")';
-  document.getElementById('device-os').textContent = currentOS.name;
+  if (bgEl) {
+    const osImg = new Image();
+    osImg.onload = () => {
+      bgEl.style.backgroundImage = 'url("images/bg_' + currentOS.key + '.png")';
+    };
+    osImg.onerror = () => {
+      bgEl.style.backgroundImage = 'url("images/bg_windows.png")';
+    };
+    osImg.src = 'images/bg_' + currentOS.key + '.png';
+    bgEl.style.backgroundImage = 'url("images/bg_' + currentOS.key + '.png")';
+  }
+  const deviceOsEl = document.getElementById('device-os');
+  if (deviceOsEl) {
+    deviceOsEl.textContent = currentOS.name;
+  }
 
   // =========================================================================
   // HỆ THỐNG ĐA TAB (MULTI-TAB) TỐI ƯU SIÊU NHẸ (DÙNG CHUNG SESSION PARTITION)
@@ -869,6 +883,7 @@
       mainContent.style.display = 'flex';
       bgWallpaper.style.display = 'block';
       bgOverlay.style.display = 'block';
+      webviewsContainer.style.display = 'none';
       omniboxInput.value = '';
       document.title = 'Lumen Browser';
       hideLoading();
@@ -876,6 +891,7 @@
       mainContent.style.display = 'none';
       bgWallpaper.style.display = 'none';
       bgOverlay.style.display = 'none';
+      webviewsContainer.style.display = 'block';
       omniboxInput.value = tab.url || '';
       document.title = (tab.title || 'Đang tải...') + ' - Lumen Browser';
     }
@@ -945,13 +961,17 @@
     let q = (query || '').trim();
     if (!q) return;
 
-    const currentTab = tabs.find(t => t.id === activeTabId);
+    let currentTab = tabs.find(t => t.id === activeTabId);
+    if (!currentTab) {
+      createNewTab();
+      currentTab = tabs.find(t => t.id === activeTabId);
+    }
     if (!currentTab) return;
 
     let targetUrl = '';
-    if (/^(https?:\\/\\/)/i.test(q)) {
+    if (/^https?:\/\//i.test(q)) {
       targetUrl = q;
-    } else if (/^[a-zA-Z0-9-]+(\\.[a-zA-Z0-9-]+)+(\\/.*)?$/i.test(q)) {
+    } else if (/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+(\/.*)?$/i.test(q)) {
       targetUrl = 'https://' + q;
     } else {
       if (currentEngine === 'Google') {
@@ -970,6 +990,7 @@
     mainContent.style.display = 'none';
     bgWallpaper.style.display = 'none';
     bgOverlay.style.display = 'none';
+    webviewsContainer.style.display = 'block';
 
     if (!currentTab.webView) {
       currentTab.webView = initWebViewForTab(currentTab.id, targetUrl);
@@ -1076,13 +1097,34 @@
   });
 
   function handleOmniboxSubmit(e) {
-    e.preventDefault();
-    navigateTo(document.getElementById('omnibox-input').value);
+    if (e && e.preventDefault) e.preventDefault();
+    const val = (document.getElementById('omnibox-input').value || '').trim();
+    if (val) {
+      navigateTo(val);
+    }
+    return false;
   }
   function handleSearchSubmit(e) {
-    e.preventDefault();
-    navigateTo(document.getElementById('search-input').value);
+    if (e && e.preventDefault) e.preventDefault();
+    const val = (document.getElementById('search-input').value || '').trim();
+    if (val) {
+      navigateTo(val);
+    }
+    return false;
   }
+
+  document.getElementById('omnibox-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleOmniboxSubmit(e);
+    }
+  });
+  document.getElementById('search-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearchSubmit(e);
+    }
+  });
 
   // SHORTCUTS
   (function cleanup() {
