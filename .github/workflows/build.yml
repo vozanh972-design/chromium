@@ -59,7 +59,7 @@ jobs:
           const fs = require('fs');
 
           // =========================================================================
-          // CẤU HÌNH CHROMIUM ANTIDETECT & TĂNG TỐC MẠNG TỐI ĐA (TẢI TỨC THÌ)
+          // CẤU HÌNH CHROMIUM ANTIDETECT & TĂNG TỐC ĐỒ HỌA GPU TỐI ĐA (60FPS/120FPS)
           // =========================================================================
           // 1. Chống phát hiện Bot / Automation (Xóa navigator.webdriver)
           app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
@@ -67,9 +67,11 @@ jobs:
           // 2. Chống rò rỉ IP card mạng thật qua WebRTC (WebRTC Leak Shield)
           app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
-          // 3. Tối ưu kết nối mạng siêu tốc (HTTP/2, HTTP/3 QUIC, TCP Fast Open)
-          app.commandLine.appendSwitch('enable-quic');
-          app.commandLine.appendSwitch('enable-tcp-fast-open');
+          // 3. Tăng tốc phần cứng GPU trực tiếp (Không dùng CPU vẽ chậm chạp)
+          app.commandLine.appendSwitch('ignore-gpu-blocklist');
+          app.commandLine.appendSwitch('enable-gpu-rasterization');
+          app.commandLine.appendSwitch('enable-zero-copy');
+          app.commandLine.appendSwitch('enable-smooth-scrolling');
 
           // 4. Loại bỏ dịch vụ theo dõi Google nhưng GIỮ NGUYÊN socket pool & DNS cache để tải web mượt mà
           app.commandLine.appendSwitch('disable-breakpad');
@@ -97,7 +99,6 @@ jobs:
               fs.mkdirSync(dataDir, { recursive: true });
             }
             app.setPath('userData', dataDir);
-            app.setPath('appData', exeDir);
             app.setPath('sessionData', path.join(dataDir, 'Session'));
             app.setPath('crashDumps', path.join(dataDir, 'CrashDumps'));
             app.setPath('logs', path.join(dataDir, 'Logs'));
@@ -118,7 +119,7 @@ jobs:
                 nodeIntegration: false,
                 contextIsolation: true,
                 spellcheck: false,
-                backgroundThrottling: true
+                backgroundThrottling: false
               }
             });
 

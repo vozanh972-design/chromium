@@ -846,9 +846,7 @@
       if (t && e.title) {
         t.title = e.title;
         renderTabs();
-        if (activeTabId === tabId) {
-          document.title = e.title + ' - Lumen Browser';
-        }
+        document.title = 'Lumen Browser';
       }
     });
     wv.addEventListener('did-navigate', (e) => {
@@ -911,7 +909,7 @@
       bgOverlay.style.display = 'none';
       webviewsContainer.style.display = 'block';
       omniboxInput.value = tab.url || '';
-      document.title = (tab.title || 'Đang tải...') + ' - Lumen Browser';
+      document.title = 'Lumen Browser';
     }
 
     renderTabs();
