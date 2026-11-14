@@ -305,7 +305,8 @@
     height: calc(100% - 76px);
     overflow: hidden;
     z-index: 50;
-    pointer-events: none;
+    background: #ffffff;
+    display: none;
   }
   .webview-instance {
     position: absolute;
@@ -316,12 +317,11 @@
     width: 100%;
     height: 100%;
     border: none;
-    background: #14171d;
+    background: #ffffff;
     display: none;
-    pointer-events: auto;
   }
   .webview-instance.active {
-    display: flex;
+    display: inline-flex !important;
   }
 
   /* ========================================================================= */
@@ -827,11 +827,13 @@
   function initWebViewForTab(tabId, url) {
     const wv = document.createElement('webview');
     wv.id = 'wv_' + tabId;
-    wv.className = 'webview-instance';
+    wv.className = 'webview-instance active';
     wv.setAttribute('allowpopups', 'true');
     // Dùng chung session partition giúp tiết kiệm 70% RAM và tái sử dụng kết nối mạng cực nhanh
     wv.setAttribute('partition', 'persist:lumen');
-    wv.src = url;
+    wv.style.width = '100%';
+    wv.style.height = '100%';
+    wv.style.display = 'inline-flex';
 
     wv.addEventListener('did-start-loading', () => {
       if (activeTabId === tabId) showLoading();
@@ -868,25 +870,12 @@
         }
       }
     });
-    wv.addEventListener('dom-ready', () => {
-      try {
-        // CHỐNG PHÁT HIỆN BOT / ANTIDETECT: Xóa bỏ navigator.webdriver
-        wv.executeJavaScript(`
-          try {
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined, configurable: true });
-            delete navigator.__proto__.webdriver;
-          } catch(e){}
-        `);
-        wv.insertCSS(`
-          ::-webkit-scrollbar { width: 7px !important; height: 7px !important; }
-          ::-webkit-scrollbar-track { background: #14171d !important; }
-          ::-webkit-scrollbar-thumb { background: #2f3746 !important; border-radius: 4px !important; }
-          ::-webkit-scrollbar-thumb:hover { background: #22c55e !important; }
-        `);
-      } catch(e){}
-    });
 
+    // Gắn vào DOM trước khi set src để Chromium compositor khởi tạo bề mặt vẽ (surface) hoàn chỉnh
     webviewsContainer.appendChild(wv);
+    if (url) {
+      wv.src = url;
+    }
     return wv;
   }
 
@@ -899,7 +888,7 @@
     tabs.forEach(t => {
       if (t.webView) {
         if (t.id === tabId && !t.isNewTab) {
-          t.webView.style.display = 'flex';
+          t.webView.style.display = 'inline-flex';
           t.webView.classList.add('active');
         } else {
           t.webView.style.display = 'none';
@@ -1027,7 +1016,7 @@
       currentTab.webView.src = targetUrl;
     }
 
-    currentTab.webView.style.display = 'flex';
+    currentTab.webView.style.display = 'inline-flex';
     currentTab.webView.classList.add('active');
 
     omniboxInput.value = targetUrl;

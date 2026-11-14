@@ -54,12 +54,12 @@ jobs:
           "@ | Out-File -FilePath app_runtime\package.json -Encoding utf8
 
           @"
-          const { app, BrowserWindow } = require('electron');
+          const { app, BrowserWindow, session } = require('electron');
           const path = require('path');
           const fs = require('fs');
 
           // =========================================================================
-          // CẤU HÌNH CHROMIUM ANTIDETECT (TRIỆT TIÊU 100% TELEMETRY & CHỐNG PHÁT HIỆN)
+          // CẤU HÌNH CHROMIUM ANTIDETECT & TĂNG TỐC MẠNG TỐI ĐA (TẢI TỨC THÌ)
           // =========================================================================
           // 1. Chống phát hiện Bot / Automation (Xóa navigator.webdriver)
           app.commandLine.appendSwitch('disable-blink-features', 'AutomationControlled');
@@ -67,8 +67,11 @@ jobs:
           // 2. Chống rò rỉ IP card mạng thật qua WebRTC (WebRTC Leak Shield)
           app.commandLine.appendSwitch('force-webrtc-ip-handling-policy', 'default_public_interface_only');
 
-          // 3. Loại bỏ toàn bộ dịch vụ ngầm và theo dõi của Google gốc (No Phone-Home)
-          app.commandLine.appendSwitch('disable-background-networking');
+          // 3. Tối ưu kết nối mạng siêu tốc (HTTP/2, HTTP/3 QUIC, TCP Fast Open)
+          app.commandLine.appendSwitch('enable-quic');
+          app.commandLine.appendSwitch('enable-tcp-fast-open');
+
+          // 4. Loại bỏ dịch vụ theo dõi Google nhưng GIỮ NGUYÊN socket pool & DNS cache để tải web mượt mà
           app.commandLine.appendSwitch('disable-breakpad');
           app.commandLine.appendSwitch('disable-component-update');
           app.commandLine.appendSwitch('disable-domain-reliability');
@@ -77,7 +80,12 @@ jobs:
           app.commandLine.appendSwitch('disable-default-apps');
           app.commandLine.appendSwitch('no-default-browser-check');
           app.commandLine.appendSwitch('disable-speech-api');
-          app.commandLine.appendSwitch('renderer-process-limit', '6');
+
+          // =========================================================================
+          // USER-AGENT CHUẨN GOOGLE CHROME CHO TOÀN BỘ ỨNG DỤNG & CÁC WEBVIEW CON
+          // =========================================================================
+          const cleanUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+          app.userAgentFallback = cleanUA;
 
           // =========================================================================
           // LƯU TOÀN BỘ DỮ LIỆU NGAY TRÊN Ổ VÀ THƯ MỤC CÀI ĐẶT (KHÔNG LƯU VÀO Ổ C)
@@ -114,9 +122,6 @@ jobs:
               }
             });
 
-            // Tẩy sạch định danh Electron khỏi User-Agent, ngụy trang thành Chrome chuẩn 100%
-            const rawUA = win.webContents.userAgent;
-            const cleanUA = rawUA.replace(/Electron\/[0-9\.]+\s?/g, '');
             win.webContents.userAgent = cleanUA;
 
             win.once('ready-to-show', () => {
@@ -127,7 +132,23 @@ jobs:
               return { action: 'allow' };
             });
           }
-          app.whenReady().then(createWindow);
+
+          app.on('web-contents-created', (event, contents) => {
+            // Đảm bảo mọi webview con tải web với tốc độ tối đa và không bị chặn
+            contents.setUserAgent(cleanUA);
+            contents.setWindowOpenHandler(({ url }) => {
+              return { action: 'allow' };
+            });
+          });
+
+          app.whenReady().then(() => {
+            try {
+              const ses = session.fromPartition('persist:lumen');
+              ses.setUserAgent(cleanUA);
+            } catch(e){}
+            createWindow();
+          });
+
           app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
           "@ | Out-File -FilePath app_runtime\main.js -Encoding utf8
 
